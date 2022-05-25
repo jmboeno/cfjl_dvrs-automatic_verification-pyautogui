@@ -1,27 +1,15 @@
+from datetime import datetime
 from email import encoders
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
-from ..contants import EMAIL, HOST, PASSWORD, PORT
+from config.constants import EMAIL_SENDER, HOST, PASSWORD, PORT
 
 
-def send():
-    server = smtplib.SMTP(HOST, PORT)
+def send(emails_receivers):
 
-    server.ehlo()
-    server.starttls()
-    server.login(EMAIL, PASSWORD)
-
-    corpo = "Processo automatizado de verificação diária de câmeras e DRV's (Ver anexo)"
-
-    email_msg = MIMEMultipart()
-    email_msg['From'] = EMAIL
-    email_msg['To'] = EMAIL
-    email_msg['Subject'] = 'CFTV - Verificação diária'
-    email_msg.attach(MIMEText(corpo, 'plain'))
-
-    cam_arquivo = "monitoramento.pdf"
+    cam_arquivo = "CHECK_DVRS_"+datetime.today().strftime('%Y-%m-%d')+".pdf"
     attachment = open(cam_arquivo, 'rb')
 
     att = MIMEBase('application', 'octet-stream')
@@ -29,10 +17,28 @@ def send():
     encoders.encode_base64(att)
 
     att.add_header('Content-Disposition',
-                   f'attachment; filename=monitoramento.pdf')
+                   f'attachment; filename=CHECK_DVRS_'+datetime.today().strftime('%Y-%m-%d')+'.pdf')
     attachment.close()
+
+    email_msg = MIMEMultipart()
+    body = "Processo automatizado de verificação diária de câmeras e DRV's (Ver anexo)"
+    email_msg.attach(MIMEText(body, 'plain'))
     email_msg.attach(att)
 
-    server.sendmail(email_msg['From'], email_msg['To'], email_msg.as_string())
+    for email in emails_receivers:
+        print("Enviando email para: ", email)
+        email_msg['From'] = EMAIL_SENDER
+        email_msg['To'] = email
+        email_msg['Subject'] = 'CFTV - Verificação diária'
 
-    server.quit()
+        try:
+            server = smtplib.SMTP(HOST, PORT)
+            server.ehlo()
+            server.starttls()
+            server.login(EMAIL_SENDER, PASSWORD)
+            server.sendmail(EMAIL_SENDER, email,
+                            email_msg.as_string())
+            server.quit()
+            print('Email enviado!')
+        except smtplib.SMTPException:
+            print("Error: Ocorreu um erro ao enviar o email")
