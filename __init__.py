@@ -17,4 +17,4 @@ resizeIMG.resize()
 convertPDF.createPDF()
 
 # ENVIA POR E-MAILS em um Array
-sendMAIL.send(['boenojonasm@cfjl.com.br', 'hammesmaiconr@cfjl.com.br'])
+sendMAIL.send(['email_receiver_1@domain.com', 'email_receiver_2@domain.com'])
